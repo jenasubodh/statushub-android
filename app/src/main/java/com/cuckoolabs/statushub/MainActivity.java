@@ -54,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
 
         mSocket.on(Socket.EVENT_CONNECT,onConnect);
         mSocket.on(Socket.EVENT_DISCONNECT,onDisconnect);
+        mSocket.on("status",onStatusRecieved);
+
         mSocket.connect();
 
         // Recycler View Config
@@ -74,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
         mSocket.off(Socket.EVENT_CONNECT, onConnect);
         mSocket.off(Socket.EVENT_DISCONNECT, onDisconnect);
+        mSocket.off("status",onStatusRecieved);
     }
 
     private void prepareMPostData() {
@@ -92,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         mAdapter.notifyDataSetChanged();
     }
 
-    // Socket Listeners
+    // On Socket Connected
     private Emitter.Listener onConnect = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
@@ -105,6 +108,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // On Socket Disconnected
     private Emitter.Listener onDisconnect = new Emitter.Listener() {
         @Override
         public void call(Object... args) {
@@ -112,6 +116,19 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     Toast.makeText(getApplicationContext(), "User Disconnected !!", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    };
+
+    // On New Message Recieved
+    private Emitter.Listener onStatusRecieved = new Emitter.Listener() {
+        @Override
+        public void call(final Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), args[0].toString(), Toast.LENGTH_LONG).show();
                 }
             });
         }
