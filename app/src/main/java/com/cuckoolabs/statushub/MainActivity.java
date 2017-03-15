@@ -7,6 +7,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -14,6 +15,9 @@ import android.widget.Toast;
 import com.cuckoolabs.statushub.adapters.StatusAdapter;
 import com.cuckoolabs.statushub.models.Post;
 import com.cuckoolabs.statushub.models.User;
+import com.cuckoolabs.statushub.models.ui.UIPost;
+import com.cuckoolabs.statushub.services.ServiceGenerator;
+import com.cuckoolabs.statushub.services.interfaces.IPostService;
 import com.cuckoolabs.statushub.utilities.SharedPreferenceHelper;
 
 import org.json.JSONException;
@@ -29,6 +33,9 @@ import butterknife.ButterKnife;
 import io.socket.client.IO;
 import io.socket.client.Socket;
 import io.socket.emitter.Emitter;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -53,9 +60,23 @@ public class MainActivity extends AppCompatActivity {
         // Bind Butterknife
         ButterKnife.bind(this);
 
+
         if(!isLoggedIn()) {
             startLogin();
         }
+
+        _shareButton.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                String statusMessage = _statusText.getText().toString();
+
+                if(statusMessage != null && !statusMessage.isEmpty()) {
+                    shareStatus(statusMessage);
+                }
+            }
+        });
 
         try {
             mSocket = IO.socket("https://statushub-dev.herokuapp.com/");
@@ -101,6 +122,34 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
         return true;
+    }
+
+    private void shareStatus(String statusMessage) {
+
+        String authKey = SharedPreferenceHelper.getSharedPreferenceString(getApplicationContext(), "authKey", null);
+        if(authKey != null) {
+
+            UIPost post = new UIPost(authKey, statusMessage);
+
+            IPostService postService = ServiceGenerator.createService(IPostService.class);
+            Call<Post> call = postService.createPost(post);
+            call.enqueue(new Callback<Post>() {
+
+                @Override
+                public void onResponse(Call<Post> call, Response<Post> response) {
+                    if (response.isSuccessful()) {
+                        Log.d("Success ", response.message());
+                    } else {
+                        Log.d("Error ", response.message());
+                    }
+                }
+                @Override
+                public void onFailure(Call<Post> call, Throwable t) {
+                    Log.d("Error", t.getMessage());
+                }
+            });
+
+        }
     }
 
     // On Socket Connected
