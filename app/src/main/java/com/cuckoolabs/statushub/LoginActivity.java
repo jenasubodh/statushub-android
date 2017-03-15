@@ -15,8 +15,16 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.cuckoolabs.statushub.models.Authorization;
+import com.cuckoolabs.statushub.services.ServiceGenerator;
+import com.cuckoolabs.statushub.services.interfaces.IAuthenticateService;
+import com.cuckoolabs.statushub.utilities.SharedPreferenceHelper;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -72,17 +80,35 @@ public class LoginActivity extends AppCompatActivity {
         String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
 
-        // TODO: Implement your own authentication logic here.
+        IAuthenticateService authenticationService = ServiceGenerator.createService(IAuthenticateService.class, email, password);
+        Call<Authorization> call = authenticationService.basicLogin();
+        call.enqueue(new Callback<Authorization>() {
+            @Override
+            public void onResponse(Call<Authorization> call, final Response<Authorization> response) {
+                if (response.isSuccessful()) {
 
-        new android.os.Handler().postDelayed(
-                new Runnable() {
-                    public void run() {
-                        // On complete call either onLoginSuccess or onLoginFailed
-                        onLoginSuccess();
-                        // onLoginFailed();
-                        progressDialog.dismiss();
-                    }
-                }, 3000);
+                    Log.d("Data Recieved LL", response.body().getToken());
+                    SharedPreferenceHelper.setSharedPreferenceString(getApplicationContext(), "authKey", response.body().getToken());
+                    onLoginSuccess();
+                    progressDialog.dismiss();
+                    startHomeActivity();
+                } else {
+                    // error response, no access to resource?
+                    Log.d("Error LL", response.message());
+                    onLoginFailed();
+                    progressDialog.dismiss();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Authorization> call, Throwable t) {
+                // something went completely south (like no internet connection)
+                onLoginFailed();
+                progressDialog.dismiss();
+                Log.d("Error", t.getMessage());
+            }
+        });
+
     }
 
     @Override
@@ -135,5 +161,11 @@ public class LoginActivity extends AppCompatActivity {
         }
 
         return valid;
+    }
+
+    private void startHomeActivity() {
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
 }

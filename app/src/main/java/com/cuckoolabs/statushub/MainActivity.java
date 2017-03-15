@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.cuckoolabs.statushub.adapters.StatusAdapter;
 import com.cuckoolabs.statushub.models.Post;
 import com.cuckoolabs.statushub.models.User;
+import com.cuckoolabs.statushub.utilities.SharedPreferenceHelper;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -52,6 +53,10 @@ public class MainActivity extends AppCompatActivity {
         // Bind Butterknife
         ButterKnife.bind(this);
 
+        if(!isLoggedIn()) {
+            startLogin();
+        }
+
         try {
             mSocket = IO.socket("https://statushub-dev.herokuapp.com/");
         } catch (URISyntaxException e) {
@@ -83,26 +88,19 @@ public class MainActivity extends AppCompatActivity {
         mSocket.off("status",onStatusRecieved);
     }
 
-    private void prepareMPostData() {
-
-        User user = new User("Pic 1", "1", "Subodh Jena");
-
-        Post newPost = new Post("23 March 2017", "Sample Message 1", "1", "23 March 2017", user);
-        postList.add(newPost);
-
-        Post newPost2 = new Post("23 March 2017", "Sample Message 2", "2", "23 March 2017", user);
-        postList.add(newPost2);
-
-        Post newPost3 = new Post("23 March 2017", "Sample Message 3", "3", "23 March 2017", user);
-        postList.add(newPost3);
-
-        mAdapter.notifyDataSetChanged();
-    }
-
     private void startLogin(){
         Intent intent = new Intent(this, LoginActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    private boolean isLoggedIn(){
+        String authKey = SharedPreferenceHelper.getSharedPreferenceString(getApplicationContext(), "authKey", null);
+
+        if(authKey == null){
+            return false;
+        }
+        return true;
     }
 
     // On Socket Connected
