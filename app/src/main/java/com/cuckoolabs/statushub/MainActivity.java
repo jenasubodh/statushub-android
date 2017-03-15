@@ -7,16 +7,21 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.cuckoolabs.statushub.adapters.StatusAdapter;
 import com.cuckoolabs.statushub.models.Post;
 import com.cuckoolabs.statushub.models.User;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.socket.client.IO;
+import io.socket.client.Socket;
+import io.socket.emitter.Emitter;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -25,6 +30,8 @@ public class MainActivity extends AppCompatActivity {
     private List<Post> postList = new ArrayList<>();
     private RecyclerView recyclerView;
     private StatusAdapter mAdapter;
+
+    private Socket mSocket;
 
     @BindView(R.id.txtStatus) EditText _statusText;
     @BindView(R.id.btnShare) Button _shareButton;
@@ -39,6 +46,16 @@ public class MainActivity extends AppCompatActivity {
         // Bind Butterknife
         ButterKnife.bind(this);
 
+        try {
+            mSocket = IO.socket("https://statushub-dev.herokuapp.com/");
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+
+        mSocket.on(Socket.EVENT_CONNECT,onConnect);
+        mSocket.on(Socket.EVENT_DISCONNECT,onDisconnect);
+        mSocket.connect();
+
         // Recycler View Config
         mAdapter = new StatusAdapter(postList);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
@@ -47,6 +64,16 @@ public class MainActivity extends AppCompatActivity {
         _recyclerView.setAdapter(mAdapter);
 
         prepareMPostData();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        mSocket.disconnect();
+
+        mSocket.off(Socket.EVENT_CONNECT, onConnect);
+        mSocket.off(Socket.EVENT_DISCONNECT, onDisconnect);
     }
 
     private void prepareMPostData() {
@@ -64,4 +91,29 @@ public class MainActivity extends AppCompatActivity {
 
         mAdapter.notifyDataSetChanged();
     }
+
+    // Socket Listeners
+    private Emitter.Listener onConnect = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "User Connected !!", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    };
+
+    private Emitter.Listener onDisconnect = new Emitter.Listener() {
+        @Override
+        public void call(Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "User Disconnected !!", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    };
 }
