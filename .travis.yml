@@ -1,0 +1,13 @@
+language: android
+jdk: oraclejdk8
+
+android:
+  components:
+    - tools
+    - build-tools-25.0.1
+    - android-25
+
+script:
+    - echo "Travis branch is $TRAVIS_BRANCH"
+    - echo "Travis branch is in pull request $TRAVIS_PULL+REQUEST"
+    #- mvn clean install -P 'guice'
