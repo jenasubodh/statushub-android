@@ -126,6 +126,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void shareStatus(String statusMessage) {
 
+        _statusText.setText("");
         String authKey = SharedPreferenceHelper.getSharedPreferenceString(getApplicationContext(), "authKey", null);
         if(authKey != null) {
 
