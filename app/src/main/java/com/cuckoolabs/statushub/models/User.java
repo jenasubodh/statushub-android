@@ -6,9 +6,7 @@ package com.cuckoolabs.statushub.models;
 
 public class User {
     private String picture;
-
     private String id;
-
     private String name;
 
     public User(String picture, String id, String name) {
