@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -14,8 +15,12 @@ import com.cuckoolabs.statushub.adapters.StatusAdapter;
 import com.cuckoolabs.statushub.models.Post;
 import com.cuckoolabs.statushub.models.User;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import butterknife.BindView;
@@ -65,8 +70,6 @@ public class MainActivity extends AppCompatActivity {
         _recyclerView.setLayoutManager(mLayoutManager);
         _recyclerView.setItemAnimator(new DefaultItemAnimator());
         _recyclerView.setAdapter(mAdapter);
-
-        prepareMPostData();
     }
 
     @Override
@@ -135,7 +138,21 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getApplicationContext(), args[0].toString(), Toast.LENGTH_LONG).show();
+
+                    JSONObject data = (JSONObject) args[0];
+
+                    try {
+                        User user = new User(data.getJSONObject("user").getString("picture"), data.getJSONObject("user").getString("id"), data.getJSONObject("user").getString("name"));
+                        Post post = new Post(data.getString("updatedAt"), data.getString("message"), data.getString("id"), data.getString("createdAt"), user);
+
+                        postList.add(post);
+                        Collections.reverse(postList);
+                        mAdapter.notifyDataSetChanged();
+
+                    } catch (JSONException e) {
+                        Log.e(TAG, e.getMessage());
+                        return;
+                    }
                 }
             });
         }
